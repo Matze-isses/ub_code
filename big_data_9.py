@@ -1,17 +1,15 @@
-from os import name
 import numpy as np
 import pandas as pd
-import random
-import sys
+import statsmodels.api as sm
+import scipy.stats
 
 #np.set_printoptions(threshold=sys.maxsize)
 
 pd.set_option('display.max_columns', None)
 
 
-def get_data(s, p: int | None = None):
+def get_data():
     data_raw = pd.read_csv('/home/admin/Uni/ub_code/wheatX.csv', sep=";")
-
     # get head of table to seperate x and y
     # there are 2 possible start strings for each item in head "c" and "wPt"
     head = [item[0] for item in data_raw.items()]
@@ -25,14 +23,18 @@ def get_data(s, p: int | None = None):
 
     x = np.array(x).transpose()
     y = np.array(y).transpose()  # transfrom to np.array
+    return x, y
 
-    if p is not None:  # check if some columns should be filtered out
-        rand_indexes = np.random.choice(x.shape[1], p, replace=False)
-        x = x[:, rand_indexes]
+
+def filter_data(s, p: int, X, Y):
+    print(p, X.shape)
+    rand_indexes = np.random.choice(X.shape[0], p, replace=False)
+    y = Y[rand_indexes, :]
+    x = X[rand_indexes, :]
 
     # calculate epsilon based on shape and standart deviation
-    sig = np.var(x, ddof=1)  # ddof=1 for empirical variance
-    eps = np.random.normal(0, s * sig, size=(x.shape[0], 1))
+    sig = np.var(X, ddof=1)  # ddof=1 for empirical variance
+    eps = np.random.normal(0, s * sig, size=(X.shape[0], 1))
     return y, x, eps
 
 
@@ -40,7 +42,7 @@ def get_test_data(alpha: float):
     if alpha > 1:
         raise ValueError("Alpha needs to be below one")
 
-    y, x, eps = get_data(1)
+    x, y = get_data()
     num_individuals = (int)(y.shape[1] * alpha)
     rand_indexes = np.random.choice(x.shape[0],
                                     num_individuals,
@@ -53,7 +55,8 @@ def get_test_data(alpha: float):
 
 
 # Question 1
-y, x, eps = get_data(s=2, p=10)
+X, Y = get_data()
+y, x, eps = filter_data(1, 100, X,Y)
 print(y.shape, x.shape, eps.shape)
 
 # Question 2
@@ -69,4 +72,19 @@ for i in range(3):
           + shape_train + " " * (11 - len(shape_train))
           + " | " + shape_test)
 print("")
-print("The test individuals are: ", result[-1])
+print("")
+print("Indexes which are used as test data")
+sublist_print = [result[-1][i*5:(i + 1) * 5]
+                 for i in range((int)(len(result[-1]) / 5))]
+for item in sublist_print:
+    print('{:3d} {:3d} {:3d} {:3d} {:3d}'.format(
+        item[0], item[1], item[2], item[3], item[4]))
+
+# Question 3
+x, y = get_data()
+x_p, y_p, _ = filter_data(1, 200, x, y)
+x_q, y_q, _ = filter_data(1, 100, x_p, y_p)
+model = sm.OLS(y_q, x_q).fit()
+print(model)
+
+
