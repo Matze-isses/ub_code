@@ -1,4 +1,4 @@
-from os import name
+import os import name
 import numpy as np
 import pandas as pd
 import random
