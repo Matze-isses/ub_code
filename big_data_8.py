@@ -4,7 +4,7 @@ import numpy as np
 import statsmodels.api as sm
 import scipy.stats
 
-show_solution = 1
+show_solution = 2
 
 
 def generate_data(function: Callable, interval=(0, 30)) -> Tuple[float, float]:
@@ -28,7 +28,6 @@ def do_one_iteration(return_beta: bool = False, use_alt_function: bool = False):
 
     x, y = generate_data(function)
     x_real, y_real = generate_data(real_values)
-    print(x_real, y_real)
 
     X = sm.add_constant(x)
     model = sm.OLS(y, X).fit()
@@ -58,12 +57,12 @@ if show_solution == 1:  # plot estimation of beta
 
 elif show_solution == 2:  # plot beta for 1000 iterations
     b = [[], []]
-    for _ in range(1000):
+    for _ in range(10000):
         b_0, b_1, _, _, _, _ = do_one_iteration(return_beta=True)
         b[0].append(b_0)
         b[1].append(b_1)
 
-    ax.scatter(b[0], b[1])
+    ax.scatter(b[0], b[1], s=0.2)
 
 elif show_solution == 3:  # use cauchy
     b = [[], []]
